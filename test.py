@@ -31,3 +31,5 @@ class PathTestSuite(unittest.TestCase):
             self.assertEqual(config.fig2img_path, os.path.join('..', 'img'))
 
             # TODO create folder, save file
+
+            # TODO custom directories, including creating object

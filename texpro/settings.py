@@ -1,4 +1,5 @@
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
@@ -82,6 +83,17 @@ class _Config:
     def file_tree(self) -> List[str]:
         """A visual tree of the doc_path folder"""
         return '\n'.join([self.doc_path] + list(tree(Path(self.abs_doc_path))))
+
+    _attribute_re = re.compile(r'^config\.(\w+)$')
+
+    def get_or_return(self, key: str):
+        """If `key` is of the format 'config.*', returns `self.*`, otherwise returns `key`"""
+        match = self._attribute_re.match(key)
+        if match:
+            return match.group()
+        else:
+            return key
+
 
 
 config = _Config()

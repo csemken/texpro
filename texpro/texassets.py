@@ -1,6 +1,5 @@
 import os
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from textwrap import indent
 from typing import TypeVar
 from warnings import warn
@@ -10,13 +9,15 @@ from .settings import config
 A = TypeVar('A', bound='Asset')
 
 
-@dataclass(eq=False)
 class Asset(ABC):
     label: str
     folder: str
-    auto_load: bool = field(repr=False, default=config.auto_load)
+    auto_load: bool
 
-    def __post_init__(self):
+    def __init__(self, label: str, folder: str, auto_load: bool = False):
+        self.label = label
+        self.folder = config.get_or_return(folder)
+        self.auto_load = auto_load
         if self.auto_load:
             self.load()
 
@@ -49,7 +50,7 @@ class Asset(ABC):
 class TexCode(Asset):
     tex: str
 
-    def __init__(self, tex: str, label: str, folder: str, **kwargs):
+    def __init__(self, tex: str, label: str, folder: str = 'config.doc_path', **kwargs):
         self.tex = tex
         super().__init__(label, folder, **kwargs)
 
@@ -68,8 +69,8 @@ class TexCode(Asset):
 
 
 class TexEquation(TexCode):
-    def __init__(self, eq: str, label: str, folder: str = config.eq_path, **kwargs):
-        self.label = label  # done in init below, but already needed for eq2tex
+    def __init__(self, eq: str, label: str, folder: str = 'config.eq_path', **kwargs):
+        self.label = label  # also done in super init below, but already needed for eq2tex
         tex = self.eq2tex(eq)
         super().__init__(tex, label, folder, **kwargs)
 
