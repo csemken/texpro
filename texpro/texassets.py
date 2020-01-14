@@ -1,4 +1,4 @@
-__all__ = ['TexSnippet', 'TexEquation', 'TexTable', 'TexFigure', 'Image', 'Plot']
+__all__ = ['TexSnippet', 'TexEquation', 'TexTable', 'StargazerTable', 'TexFigure', 'Image', 'Plot']
 
 import os
 from abc import ABC, abstractmethod
@@ -97,7 +97,26 @@ class TexTable(TexSnippet):
 
 
 class StargazerTable(Asset):
-    ...
+    def __init__(self, stargazer, label: str, folder: str = 'config.tab_path', **kwargs):
+        self.stargazer = stargazer
+        super().__init__(label, folder, **kwargs)
+
+    def _repr_tex_(self) -> str:
+        return self.tex
+
+    @property
+    def fname(self) -> str:
+        return f'{self.label}.tex'
+
+    @property
+    def tex(self) -> str:
+        return self.stargazer.render_latex()
+
+    def save(self) -> A:
+        if not self._can_save(self.tex):
+            return
+        with open(self.fpath, 'w') as file:
+            file.write(self.tex)
 
 
 class Image(Asset):
