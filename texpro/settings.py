@@ -6,9 +6,17 @@ from typing import List
 
 from texpro.utils import check_valid, tree, warn_if_not_dir
 
+
 DEFAULT_EQ_TEMPLATE = r'''\begin{{align}}\label{{{label}}}
 {eq}
 \end{{align}}'''
+
+DEFAULT_FIG_TEMPLATE = r'''\begin{{figure}}
+	\centering
+	\includegraphics[{incl_args}]{{{img_path}}}
+	\caption{{{caption}}}
+	\label{{fig:{label}}}
+\end{{figure}}'''
 
 IMAGE_TYPES = []
 
@@ -24,7 +32,10 @@ class _Config:
     eq_template: str = DEFAULT_EQ_TEMPLATE
 
     img_path: str = './img'  # absolute or relative to doc_path
+
     fig_path: str = './fig'  # absolute or relative to doc_path
+    fig_template: str = DEFAULT_FIG_TEMPLATE
+
     tab_path: str = './tab'  # absolute or relative to doc_path
 
     check_paths: bool = False
@@ -93,7 +104,6 @@ class _Config:
             return getattr(self, match.group(1))
         else:
             return key
-
 
 
 config = _Config()

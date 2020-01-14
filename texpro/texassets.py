@@ -8,7 +8,6 @@ from warnings import warn
 
 from .settings import config
 
-
 A = TypeVar('A', bound='Asset')
 
 
@@ -30,8 +29,12 @@ class Asset(ABC):
         pass
 
     @property
+    def abs_folder(self) -> str:
+        return config.abspath(self.folder)
+
+    @property
     def fpath(self) -> str:
-        return os.path.join(config.abspath(self.folder), self.fname)
+        return os.path.join(self.abs_folder, self.fname)
 
     @staticmethod
     def _can_save(obj) -> bool:
@@ -68,7 +71,11 @@ class TexSnippet(Asset):
         if not self._can_save(self.tex):
             return
         with open(self.fpath, 'w') as file:
-            file.write(self._repr_tex_())
+            file.write(self.tex)
+
+    def load(self) -> A:
+        with open(self.fpath, 'r') as file:
+            self.tex = file.read()
 
 
 class TexEquation(TexSnippet):
@@ -94,7 +101,7 @@ class StargazerTable(Asset):
 
 
 class Image(Asset):
-    type: str
+    file_type: str
 
     # TODO init that checks type
 
@@ -106,9 +113,17 @@ class Image(Asset):
 
 
 class Plot(Asset):
-    type: str
+    """Holds a plot, which must implement the `savefig()` method"""
+    plot: object
+    extension: str
+    savefig_args: dict
 
-    # TODO init
+    def __init__(self, plot: str, label: str = None, folder: str = 'config.img_path', extension: str = 'pdf',
+                 savefig_args: dict = {'bbox_inches': 'tight'}, **kwargs):
+        self.plot = plot
+        self.extension = extension
+        self.savefig_args = savefig_args
+        super().__init__(label, folder, **kwargs)
 
     def _ipython_display_(self):
         # use representation of graph object
@@ -116,15 +131,49 @@ class Plot(Asset):
         # and https://ipython.readthedocs.io/en/stable/api/generated/IPython.display.html#IPython.display.DisplayObject
         ...
 
+    @property
+    def fname(self) -> str:
+        return f'{self.label}.{self.extension}'
+
+    def save(self) -> A:
+        self.plot.savefig(self.fpath, **self.savefig_args)
+        return self
+
+    def load(self) -> A:
+        raise NotImplementedError('A Plot asset cannot be loaded, only saved')
+
 
 class TexFigure(TexSnippet):
     figure: Asset
+    caption: str
+    incl_args: str
 
-    # TODO init
+    def __init__(self, figure: Asset, label: str, folder: str = 'config.fig_path',
+                 caption: str = '', incl_args: str = r'width=.8\linewidth', **kwargs):
+        self.figure = figure
+        self.caption = caption
+        self.incl_args = incl_args
+        super().__init__('', label, folder)
+        self._update_tex()
 
     def _ipython_display_(self):
         # display self.figure
         ...
+
+    @property
+    def img_rel_path(self):
+        return os.path.join(
+            os.path.relpath(self.figure.abs_folder, self.abs_folder),
+            self.figure.fname
+        )
+
+    def _update_tex(self):
+        self.tex = config.fig_template.format(
+            label=self.label,
+            incl_args=self.incl_args,
+            img_path=self.img_rel_path,
+            caption=self.caption,
+        )
 
     def save(self) -> A:
         if not self._can_save(self.figure):
@@ -133,6 +182,6 @@ class TexFigure(TexSnippet):
         if not hasattr(self.figure, 'label') or self.figure.label is None:
             self.figure.label = self.label
         self.figure.save()  # save image
-        # TODO update tex
-        super().save()  # save tex code
+        self._update_tex()  # update tex
+        super().save()  # save tex
         return self
