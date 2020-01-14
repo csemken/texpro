@@ -1,3 +1,5 @@
+__all__ = ['TexSnippet', 'TexEquation', 'TexTable', 'TexFigure', 'Image', 'Plot']
+
 import os
 from abc import ABC, abstractmethod
 from textwrap import indent
@@ -5,6 +7,7 @@ from typing import TypeVar
 from warnings import warn
 
 from .settings import config
+
 
 A = TypeVar('A', bound='Asset')
 
@@ -28,10 +31,10 @@ class Asset(ABC):
 
     @property
     def fpath(self) -> str:
-        return os.join(config.abspath(self.folder), self.fname)
+        return os.path.join(config.abspath(self.folder), self.fname)
 
     @staticmethod
-    def _can_save(self, obj) -> bool:
+    def _can_save(obj) -> bool:
         if not config.save:
             warn('Not saved because config.save is False')
             return False
@@ -47,7 +50,7 @@ class Asset(ABC):
         raise NotImplementedError(f'{type(self)} can currently only be saved')
 
 
-class TexCode(Asset):
+class TexSnippet(Asset):
     tex: str
 
     def __init__(self, tex: str, label: str, folder: str = 'config.doc_path', **kwargs):
@@ -64,11 +67,11 @@ class TexCode(Asset):
     def save(self) -> A:
         if not self._can_save(self.tex):
             return
-        with open(self.fname, 'r') as file:
+        with open(self.fpath, 'w') as file:
             file.write(self._repr_tex_())
 
 
-class TexEquation(TexCode):
+class TexEquation(TexSnippet):
     def __init__(self, eq: str, label: str, folder: str = 'config.eq_path', **kwargs):
         self.label = label  # also done in super init below, but already needed for eq2tex
         tex = self.eq2tex(eq)
@@ -82,7 +85,7 @@ class TexEquation(TexCode):
         self.tex = self.eq2tex(eq)
 
 
-class TexTable(TexCode):
+class TexTable(TexSnippet):
     ...
 
 
@@ -114,7 +117,7 @@ class Plot(Asset):
         ...
 
 
-class TexFigure(TexCode):
+class TexFigure(TexSnippet):
     figure: Asset
 
     # TODO init

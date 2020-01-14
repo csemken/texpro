@@ -90,7 +90,7 @@ class _Config:
         """If `key` is of the format 'config.*', returns `self.*`, otherwise returns `key`"""
         match = self._attribute_re.match(key)
         if match:
-            return match.group()
+            return getattr(self, match.group(1))
         else:
             return key
 
