@@ -25,12 +25,12 @@ class Asset(ABC):
 
     @property
     @abstractmethod
-    def fname(self) -> str:
+    def file_name(self) -> str:
         pass
 
     @property
-    def fpath(self) -> Path:
-        return config.abspath(self.folder) / self.fname
+    def path(self) -> Path:
+        return config.abspath(self.folder) / self.file_name
 
     @staticmethod
     def _can_save(obj) -> bool:
@@ -49,78 +49,75 @@ class Asset(ABC):
         raise NotImplementedError(f'{type(self)} can currently only be saved')
 
 
-class TexSnippet(Asset):
+class TexAsset(Asset, ABC):
+    """Uses attribute or property self.tex (str) for representation and saving"""
+
+    def _repr_tex_(self) -> str:
+        return self.tex
+
+    @property
+    def file_name(self) -> str:
+        return f'{self.label}.tex'
+
+    def save(self) -> Asset:
+        if not self._can_save(self.tex):
+            return
+        self.path.write_text(self.tex)
+        return self
+
+
+class TexSnippet(TexAsset):
     tex: str
 
     def __init__(self, tex: str, label: str, folder: Union[str, Path] = 'config.doc_path'):
         self.tex = tex
         super().__init__(label, folder)
 
-    def _repr_tex_(self) -> str:
-        return self.tex
-
-    @property
-    def fname(self) -> str:
-        return f'{self.label}.tex'
-
-    def save(self) -> Asset:
-        if not self._can_save(self.tex):
-            return
-        with open(self.fpath, 'w') as file:
-            file.write(self.tex)
-
     def load(self) -> Asset:
-        with open(self.fpath, 'r') as file:
-            self.tex = file.read()
+        self.tex = self.path.read_text()
 
 
-class TexEquation(TexSnippet):
+class TexEquation(TexAsset):
     block: str
+    eq: str
 
     def __init__(self, eq: str, label: str, folder: Union[str, Path] = 'config.eq_path',
                  block: str = 'align'):
-        self.label = label  # also done in super init below, but already needed for eq2tex
         self.block = block
-        tex = self.eq2tex(eq)
-        super().__init__(tex, label, folder)
+        self.eq = eq  # without surrounding $$
+        super().__init__(label, folder)
 
-    def eq2tex(self, eq):
-        # TODO strip $$
+    def _repr_latex_(self) -> str:
+        return f'${self.eq}$'
+
+    @property
+    def tex_label(self) -> str:
+        return config.eq_prefix + self.label
+
+    @property
+    def tex(self):
         return config.eq_template.format(
-            label=self.label,
+            label=self.tex_label,
             block=self.block,
-            eq=indent(eq, '\t')
+            eq=indent(self.eq, '\t')
         )
 
-    def set_eq(self, eq: str):
-        self.tex = self.eq2tex(eq)
 
-
-class TexTable(TexSnippet):
+class TexTable(TexAsset):
     ...
 
 
-class StargazerTable(Asset):
+class StargazerTable(TexAsset):
     def __init__(self, stargazer, label: str, folder: Union[str, Path] = 'config.tab_path'):
         self.stargazer = stargazer
         super().__init__(label, folder)
 
-    def _repr_tex_(self) -> str:
-        return self.tex
-
-    @property
-    def fname(self) -> str:
-        return f'{self.label}.tex'
+    def _repr_html_(self):
+        return self.stargazer.render_html()
 
     @property
     def tex(self) -> str:
         return self.stargazer.render_latex()
-
-    def save(self) -> Asset:
-        if not self._can_save(self.tex):
-            return
-        with open(self.fpath, 'w') as file:
-            file.write(self.tex)
 
 
 class Image(Asset):
@@ -128,10 +125,11 @@ class Image(Asset):
 
     # TODO init that checks type
 
-    # TODO fname property
+    # TODO file_name property
 
     def _repr_mimebundle_(self, include=None, exclude=None):
         # see https://ipython.readthedocs.io/en/stable/config/integrating.html
+        # and https://ipython.readthedocs.io/en/stable/api/generated/IPython.display.html#IPython.display.display
         ...
 
 
@@ -141,7 +139,7 @@ class Plot(Asset):
     extension: str
     savefig_args: dict
 
-    def __init__(self, plot: str, label: str = None, folder: Union[str, Path] = 'config.img_path',
+    def __init__(self, plot: object, label: str = None, folder: Union[str, Path] = 'config.img_path',
                  extension: str = 'pdf', savefig_args: dict = {'bbox_inches': 'tight'}):
         self.plot = plot
         self.extension = extension
@@ -149,24 +147,22 @@ class Plot(Asset):
         super().__init__(label, folder)
 
     def _ipython_display_(self):
-        # use representation of graph object
-        # see https://ipython.readthedocs.io/en/stable/config/integrating.html
-        # and https://ipython.readthedocs.io/en/stable/api/generated/IPython.display.html#IPython.display.DisplayObject
-        ...
+        # graph is already displayed through plt.show()
+        return
 
     @property
-    def fname(self) -> str:
+    def file_name(self) -> str:
         return f'{self.label}.{self.extension}'
 
     def save(self) -> Asset:
-        self.plot.savefig(self.fpath, **self.savefig_args)
+        self.plot.savefig(self.path, **self.savefig_args)
         return self
 
     def load(self) -> Asset:
         raise NotImplementedError('A Plot asset cannot be loaded, only saved')
 
 
-class TexFigure(TexSnippet):
+class TexFigure(TexAsset):
     figure: Asset
     caption: str
     incl_args: str
@@ -176,21 +172,26 @@ class TexFigure(TexSnippet):
         self.figure = figure
         self.caption = caption
         self.incl_args = incl_args
-        super().__init__('', label, folder)
-        self._update_tex()
+        super().__init__(label, folder)
 
     def _ipython_display_(self):
         # display self.figure
-        ...
+        from IPython.display import display
+        return display(self.figure)
 
     @property
-    def img_rel_path(self):
-        # need to use os because Path.relative_to only works for sub-directories
+    def tex_label(self) -> str:
+        return config.fig_prefix + self.label
+
+    @property
+    def img_rel_path(self) -> str:
+        # need to use os.path because Path.relative_to only works for sub-directories
         return os.path.relpath(self.figure.folder, self.folder)
 
-    def _update_tex(self):
-        self.tex = config.fig_template.format(
-            label=self.label,
+    @property
+    def tex(self):
+        return config.fig_template.format(
+            label=self.tex_label,
             incl_args=self.incl_args,
             img_path=self.img_rel_path,
             caption=self.caption,
@@ -203,6 +204,5 @@ class TexFigure(TexSnippet):
         if not hasattr(self.figure, 'label') or self.figure.label is None:
             self.figure.label = self.label
         self.figure.save()  # save image
-        self._update_tex()  # update tex
         super().save()  # save tex
         return self

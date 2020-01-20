@@ -26,23 +26,20 @@ class _Config:
     doc_path: Path = None  # absolute or relative to current directory
 
     eq_path: Path = Path('./eq')  # absolute or relative to doc_path
-    eq_label: str = 'eq'
+    eq_prefix: str = 'eq:'
     eq_template: str = DEFAULT_EQ_TEMPLATE
 
     img_path: Path = Path('./img')  # absolute or relative to doc_path
 
     fig_path: Path = Path('./fig')  # absolute or relative to doc_path
+    fig_prefix: str = 'fig:'
     fig_template: str = DEFAULT_FIG_TEMPLATE
 
     tab_path: Path = Path('./tab')  # absolute or relative to doc_path
 
+    # behaviour
     check_paths: bool = False
     save: bool = True
-
-    # default attributes
-    auto_load = False
-    image_type = 'pdf'
-    plot_type = 'pdf'
 
     def __setattr__(self, name, value):
         if name.endswith('path') and value is not None and \
@@ -58,7 +55,7 @@ class _Config:
         super().__setattr__(name, value)
 
     def abspath(self, path: Path) -> Path:
-        """Absolute path generator, used to save and load files"""
+        """Absolute path from doc_path, used to save and load files"""
         if path.is_absolute():
             return path
         if self.doc_path is None:
