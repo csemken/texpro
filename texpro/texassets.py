@@ -1,27 +1,27 @@
+from __future__ import annotations
+
 __all__ = ['TexSnippet', 'TexEquation', 'TexTable', 'StargazerTable', 'TexFigure', 'Image', 'Plot']
 
 import os
 from abc import ABC, abstractmethod
+from pathlib import Path
 from textwrap import indent
-from typing import TypeVar
+from typing import TypeVar, Union
 from warnings import warn
 
 from .settings import config
 
-A = TypeVar('A', bound='Asset')
-
 
 class Asset(ABC):
     label: str
-    folder: str
-    auto_load: bool
+    folder: Path
 
-    def __init__(self, label: str, folder: str, auto_load: bool = False):
+    def __init__(self, label: str, folder: Union[str, Path]):
         self.label = label
-        self.folder = config.get_or_return(folder)
-        self.auto_load = auto_load
-        if self.auto_load:
-            self.load()
+        folder = config.get_or_return(folder)
+        if not isinstance(folder, Path):
+            folder = Path(folder)
+        self.folder = folder
 
     @property
     @abstractmethod
@@ -29,12 +29,8 @@ class Asset(ABC):
         pass
 
     @property
-    def abs_folder(self) -> str:
-        return config.abspath(self.folder)
-
-    @property
-    def fpath(self) -> str:
-        return os.path.join(self.abs_folder, self.fname)
+    def fpath(self) -> Path:
+        return config.abspath(self.folder) / self.fname
 
     @staticmethod
     def _can_save(obj) -> bool:
@@ -46,19 +42,19 @@ class Asset(ABC):
         return True
 
     @abstractmethod
-    def save(self) -> A:
+    def save(self) -> Asset:
         pass
 
-    def load(self) -> A:
+    def load(self) -> Asset:
         raise NotImplementedError(f'{type(self)} can currently only be saved')
 
 
 class TexSnippet(Asset):
     tex: str
 
-    def __init__(self, tex: str, label: str, folder: str = 'config.doc_path', **kwargs):
+    def __init__(self, tex: str, label: str, folder: Union[str, Path] = 'config.doc_path'):
         self.tex = tex
-        super().__init__(label, folder, **kwargs)
+        super().__init__(label, folder)
 
     def _repr_tex_(self) -> str:
         return self.tex
@@ -67,26 +63,34 @@ class TexSnippet(Asset):
     def fname(self) -> str:
         return f'{self.label}.tex'
 
-    def save(self) -> A:
+    def save(self) -> Asset:
         if not self._can_save(self.tex):
             return
         with open(self.fpath, 'w') as file:
             file.write(self.tex)
 
-    def load(self) -> A:
+    def load(self) -> Asset:
         with open(self.fpath, 'r') as file:
             self.tex = file.read()
 
 
 class TexEquation(TexSnippet):
-    def __init__(self, eq: str, label: str, folder: str = 'config.eq_path', **kwargs):
+    block: str
+
+    def __init__(self, eq: str, label: str, folder: Union[str, Path] = 'config.eq_path',
+                 block: str = 'align'):
         self.label = label  # also done in super init below, but already needed for eq2tex
+        self.block = block
         tex = self.eq2tex(eq)
-        super().__init__(tex, label, folder, **kwargs)
+        super().__init__(tex, label, folder)
 
     def eq2tex(self, eq):
         # TODO strip $$
-        return config.eq_template.format(label=self.label, eq=indent(eq, '\t'))
+        return config.eq_template.format(
+            label=self.label,
+            block=self.block,
+            eq=indent(eq, '\t')
+        )
 
     def set_eq(self, eq: str):
         self.tex = self.eq2tex(eq)
@@ -97,9 +101,9 @@ class TexTable(TexSnippet):
 
 
 class StargazerTable(Asset):
-    def __init__(self, stargazer, label: str, folder: str = 'config.tab_path', **kwargs):
+    def __init__(self, stargazer, label: str, folder: Union[str, Path] = 'config.tab_path'):
         self.stargazer = stargazer
-        super().__init__(label, folder, **kwargs)
+        super().__init__(label, folder)
 
     def _repr_tex_(self) -> str:
         return self.tex
@@ -112,7 +116,7 @@ class StargazerTable(Asset):
     def tex(self) -> str:
         return self.stargazer.render_latex()
 
-    def save(self) -> A:
+    def save(self) -> Asset:
         if not self._can_save(self.tex):
             return
         with open(self.fpath, 'w') as file:
@@ -137,12 +141,12 @@ class Plot(Asset):
     extension: str
     savefig_args: dict
 
-    def __init__(self, plot: str, label: str = None, folder: str = 'config.img_path', extension: str = 'pdf',
-                 savefig_args: dict = {'bbox_inches': 'tight'}, **kwargs):
+    def __init__(self, plot: str, label: str = None, folder: Union[str, Path] = 'config.img_path',
+                 extension: str = 'pdf', savefig_args: dict = {'bbox_inches': 'tight'}):
         self.plot = plot
         self.extension = extension
         self.savefig_args = savefig_args
-        super().__init__(label, folder, **kwargs)
+        super().__init__(label, folder)
 
     def _ipython_display_(self):
         # use representation of graph object
@@ -154,11 +158,11 @@ class Plot(Asset):
     def fname(self) -> str:
         return f'{self.label}.{self.extension}'
 
-    def save(self) -> A:
+    def save(self) -> Asset:
         self.plot.savefig(self.fpath, **self.savefig_args)
         return self
 
-    def load(self) -> A:
+    def load(self) -> Asset:
         raise NotImplementedError('A Plot asset cannot be loaded, only saved')
 
 
@@ -167,8 +171,8 @@ class TexFigure(TexSnippet):
     caption: str
     incl_args: str
 
-    def __init__(self, figure: Asset, label: str, folder: str = 'config.fig_path',
-                 caption: str = '', incl_args: str = r'width=.8\linewidth', **kwargs):
+    def __init__(self, figure: Asset, label: str, folder: Union[str, Path] = 'config.fig_path',
+                 caption: str = '', incl_args: str = r'width=.8\linewidth'):
         self.figure = figure
         self.caption = caption
         self.incl_args = incl_args
@@ -181,10 +185,8 @@ class TexFigure(TexSnippet):
 
     @property
     def img_rel_path(self):
-        return os.path.join(
-            os.path.relpath(self.figure.abs_folder, self.abs_folder),
-            self.figure.fname
-        )
+        # need to use os because Path.relative_to only works for sub-directories
+        return os.path.relpath(self.figure.folder, self.folder)
 
     def _update_tex(self):
         self.tex = config.fig_template.format(
@@ -194,7 +196,7 @@ class TexFigure(TexSnippet):
             caption=self.caption,
         )
 
-    def save(self) -> A:
+    def save(self) -> Asset:
         if not self._can_save(self.figure):
             return
         # use label from figure also for image, if none set yet

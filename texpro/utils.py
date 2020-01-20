@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from warnings import warn
 
@@ -8,9 +7,10 @@ def check_valid(value, options, name):
         raise AttributeError(f'{name} has to be one of {options}')
 
 
-def warn_if_not_dir(path):
-    if not os.path.isdir(path):
-        warn(f'{path} is not a directory', ResourceWarning)
+def warn_if_not_dir(path: Path):
+    if not path.is_dir():
+        warn(f'{path} is not a directory, consider using config.make_folders()',
+             ResourceWarning)
 
 
 # prefix components:

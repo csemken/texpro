@@ -21,7 +21,7 @@ class PathTestSuite(unittest.TestCase):
         nonsense_doc_path = 'directorydoesnotexist'
         with self.assertWarns(ResourceWarning):
             config.doc_path = nonsense_doc_path
-        self.assertEqual(config.doc_path, nonsense_doc_path)
+        self.assertEqual(str(config.doc_path), nonsense_doc_path)
 
         # save a file -> IOError
         self.assertRaises(IOError, TexEquation('a_b', 'test_eq').save)
@@ -35,8 +35,7 @@ class PathTestSuite(unittest.TestCase):
             config.doc_path = tmp_doc_path
 
             # default directories
-            self.assertEqual(config.abspath(config.img_path), os.path.join(tmp_doc_path, 'img'))
-            self.assertEqual(config.fig2img_path, os.path.join('..', 'img'))
+            self.assertEqual(str(config.abspath(config.img_path)), os.path.join(tmp_doc_path, 'img'))
 
     def test_make_folders(self):
         # setting real path
