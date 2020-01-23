@@ -2,11 +2,10 @@ from __future__ import annotations
 
 __all__ = ['TexSnippet', 'TexEquation', 'TexTable', 'StargazerTable', 'TexFigure', 'Image', 'Plot']
 
-import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 from textwrap import indent
-from typing import TypeVar, Union
+from typing import Union
 from warnings import warn
 
 from .settings import config
@@ -82,7 +81,7 @@ class TexEquation(TexAsset):
     eq: str
 
     def __init__(self, eq: str, label: str, folder: Union[str, Path] = 'config.eq_path',
-                 block: str = 'align'):
+                 block: str = 'equation'):
         self.block = block
         self.eq = eq  # without surrounding $$
         super().__init__(label, folder)
@@ -184,16 +183,11 @@ class TexFigure(TexAsset):
         return config.fig_prefix + self.label
 
     @property
-    def img_rel_path(self) -> str:
-        # need to use os.path because Path.relative_to only works for sub-directories
-        return os.path.relpath(self.figure.folder, self.folder)
-
-    @property
     def tex(self):
         return config.fig_template.format(
             label=self.tex_label,
             incl_args=self.incl_args,
-            img_path=self.img_rel_path,
+            img_path=self.figure.path,
             caption=self.caption,
         )
 

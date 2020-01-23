@@ -13,7 +13,7 @@ DEFAULT_FIG_TEMPLATE = r'''\begin{{figure}}
 	\centering
 	\includegraphics[{incl_args}]{{{img_path}}}
 	\caption{{{caption}}}
-	\label{{fig:{label}}}
+	\label{{{label}}}
 \end{{figure}}'''
 
 IMAGE_TYPES = []
@@ -42,8 +42,7 @@ class _Config:
     save: bool = True
 
     def __setattr__(self, name, value):
-        if name.endswith('path') and value is not None and \
-                not isinstance(value, Path):
+        if name.endswith('path') and value is not None and not isinstance(value, Path):
             value = Path(value)
         if name == 'doc_path':
             if self.check_paths:
