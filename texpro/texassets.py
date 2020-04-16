@@ -28,8 +28,13 @@ class Asset(ABC):
         pass
 
     @property
+    def rel_path(self) -> Path:
+        """Path relative to config.doc_path"""
+        return self.folder / self.file_name
+
+    @property
     def path(self) -> Path:
-        return config.abspath(self.folder) / self.file_name
+        return config.abspath(self.rel_path)
 
     @staticmethod
     def _can_save(obj) -> bool:
@@ -147,14 +152,22 @@ class Plot(Asset):
 
     def _ipython_display_(self):
         # graph is already displayed through plt.show()
-        return
+        # TODO add option to display
+        if callable(getattr(self.plot, '_ipython_display_', None)):
+            return self.plot._ipython_display_()
 
     @property
     def file_name(self) -> str:
         return f'{self.label}.{self.extension}'
 
     def save(self) -> Asset:
-        self.plot.savefig(self.path, **self.savefig_args)
+        if callable(getattr(self.plot, 'savefig', None)):
+            # save matplotlib plots using savefig
+            self.plot.savefig(self.path, **self.savefig_args)
+        elif callable(getattr(self.plot, 'write_image', None)):
+            # save plotly plots using write_image (https://plot.ly/python/static-image-export/)
+            self.plot.write_image(str(self.path))
+        # TODO raise error if neither method available
         return self
 
     def load(self) -> Asset:
@@ -175,8 +188,7 @@ class TexFigure(TexAsset):
 
     def _ipython_display_(self):
         # display self.figure
-        from IPython.display import display
-        return display(self.figure)
+        return self.figure._ipython_display_()
 
     @property
     def tex_label(self) -> str:
@@ -187,7 +199,7 @@ class TexFigure(TexAsset):
         return config.fig_template.format(
             label=self.tex_label,
             incl_args=self.incl_args,
-            img_path=self.figure.path,
+            img_path=self.figure.rel_path,
             caption=self.caption,
         )
 
