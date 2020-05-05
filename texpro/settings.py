@@ -16,6 +16,13 @@ DEFAULT_FIG_TEMPLATE = r'''\begin{{figure}}
 	\label{{{label}}}
 \end{{figure}}'''
 
+DEFAULT_TAB_TEMPLATE = r'''\begin{{figure}}
+	\centering
+{table}
+	\caption{{{caption}}}
+	\label{{{label}}}
+\end{{figure}}'''
+
 IMAGE_TYPES = []
 
 PLOT_TYPES = IMAGE_TYPES
@@ -36,6 +43,8 @@ class _Config:
     fig_template: str = DEFAULT_FIG_TEMPLATE
 
     tab_path: Path = Path('./tab')  # absolute or relative to doc_path
+    tab_prefix: str = 'tab:'
+    tab_template: str = DEFAULT_TAB_TEMPLATE
 
     # behaviour
     check_paths: bool = False

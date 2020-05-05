@@ -39,7 +39,7 @@ class Asset(ABC):
     @staticmethod
     def _can_save(obj) -> bool:
         if not config.save:
-            warn('Not saved because config.save is False')
+            # warn('Not saved because config.save is False')
             return False
         if obj is None:
             raise Exception('There is nothing to be saved yet')
@@ -108,7 +108,30 @@ class TexEquation(TexAsset):
 
 
 class TexTable(TexAsset):
-    ...
+    def __init__(self, df, label: str, caption: str = '',
+                 folder: Union[str, Path] = 'config.tab_path'):
+        self.df = df
+        self.caption = caption
+        super().__init__(label, folder)
+
+    def _repr_html_(self):
+        return self.df.to_html()
+
+    @property
+    def tex_label(self) -> str:
+        return config.tab_prefix + self.label
+
+    @property
+    def tex(self):
+        return config.tab_template.format(
+            label=self.tex_label,
+            table=self.df.to_latex(),
+            caption=self.caption,
+        )
+
+    def save(self) -> Asset:
+        super().save()  # save tex
+        return self
 
 
 class StargazerTable(TexAsset):
