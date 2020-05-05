@@ -73,7 +73,7 @@ class TexAsset(Asset, ABC):
 class TexSnippet(TexAsset):
     tex: str
 
-    def __init__(self, tex: str, label: str, folder: Union[str, Path] = 'config.doc_path'):
+    def __init__(self, label: str, tex: str, folder: Union[str, Path] = 'config.doc_path'):
         self.tex = tex
         super().__init__(label, folder)
 
@@ -85,7 +85,7 @@ class TexEquation(TexAsset):
     block: str
     eq: str
 
-    def __init__(self, eq: str, label: str, folder: Union[str, Path] = 'config.eq_path',
+    def __init__(self, label: str, eq: str, folder: Union[str, Path] = 'config.eq_path',
                  block: str = 'equation'):
         self.block = block
         self.eq = eq  # without surrounding $$
@@ -108,7 +108,7 @@ class TexEquation(TexAsset):
 
 
 class TexTable(TexAsset):
-    def __init__(self, df, label: str, caption: str = '',
+    def __init__(self, label: str, df, caption: str = '',
                  folder: Union[str, Path] = 'config.tab_path'):
         self.df = df
         self.caption = caption
@@ -135,7 +135,7 @@ class TexTable(TexAsset):
 
 
 class StargazerTable(TexAsset):
-    def __init__(self, stargazer, label: str, folder: Union[str, Path] = 'config.tab_path'):
+    def __init__(self, label: str, stargazer, folder: Union[str, Path] = 'config.tab_path'):
         self.stargazer = stargazer
         super().__init__(label, folder)
 
@@ -202,7 +202,7 @@ class TexFigure(TexAsset):
     caption: str
     incl_args: str
 
-    def __init__(self, figure: Asset, label: str, folder: Union[str, Path] = 'config.fig_path',
+    def __init__(self, label: str, figure: Asset, folder: Union[str, Path] = 'config.fig_path',
                  caption: str = '', incl_args: str = r'width=.8\linewidth'):
         self.figure = figure
         self.caption = caption
