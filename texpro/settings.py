@@ -49,6 +49,8 @@ class _Config:
     # behaviour
     check_paths: bool = False
     save: bool = True
+    auto_save: bool = True
+    auto_load: bool = True
 
     def __setattr__(self, name, value):
         if name.endswith('path') and value is not None and not isinstance(value, Path):

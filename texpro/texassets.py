@@ -15,12 +15,20 @@ class Asset(ABC):
     label: str
     folder: Path
 
-    def __init__(self, label: str, folder: Union[str, Path]):
+    def __init__(self, label: str, folder: Union[str, Path],
+                 obj_supplied: bool = None):
         self.label = label
         folder = config.get_or_return(folder)
         if not isinstance(folder, Path):
             folder = Path(folder)
         self.folder = folder
+
+        # auto save/load
+        if obj_supplied is not None:
+            if obj_supplied and config.auto_save:
+                self.save()
+            elif not obj_supplied and config.auto_load:
+                self.load()
 
     @property
     @abstractmethod
@@ -89,7 +97,7 @@ class TexEquation(TexAsset):
                  block: str = 'equation'):
         self.block = block
         self.eq = eq  # without surrounding $$
-        super().__init__(label, folder)
+        super().__init__(label, folder, obj_supplied=True)
 
     def _repr_latex_(self) -> str:
         return f'${self.eq}$'
@@ -112,7 +120,7 @@ class TexTable(TexAsset):
                  folder: Union[str, Path] = 'config.tab_path'):
         self.df = df
         self.caption = caption
-        super().__init__(label, folder)
+        super().__init__(label, folder, obj_supplied=True)
 
     def _repr_html_(self):
         return self.df.to_html()
@@ -137,7 +145,7 @@ class TexTable(TexAsset):
 class StargazerTable(TexAsset):
     def __init__(self, label: str, stargazer, folder: Union[str, Path] = 'config.tab_path'):
         self.stargazer = stargazer
-        super().__init__(label, folder)
+        super().__init__(label, folder, obj_supplied=True)
 
     def _repr_html_(self):
         return self.stargazer.render_html()
@@ -207,7 +215,7 @@ class TexFigure(TexAsset):
         self.figure = figure
         self.caption = caption
         self.incl_args = incl_args
-        super().__init__(label, folder)
+        super().__init__(label, folder, obj_supplied=True)
 
     def _ipython_display_(self):
         # display self.figure
