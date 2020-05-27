@@ -64,7 +64,7 @@ class Asset(ABC):
 class TexAsset(Asset, ABC):
     """Uses attribute or property self.tex (str) for representation and saving"""
 
-    def _repr_tex_(self) -> str:
+    def _repr_latex_(self) -> str:
         return self.tex
 
     @property
@@ -81,9 +81,9 @@ class TexAsset(Asset, ABC):
 class TexSnippet(TexAsset):
     tex: str
 
-    def __init__(self, label: str, tex: str, folder: Union[str, Path] = 'config.doc_path'):
+    def __init__(self, label: str, tex: str = None, folder: Union[str, Path] = 'config.doc_path'):
         self.tex = tex
-        super().__init__(label, folder)
+        super().__init__(label, folder, obj_supplied=tex is not None)
 
     def load(self) -> Asset:
         self.tex = self.path.read_text()
@@ -98,9 +98,6 @@ class TexEquation(TexAsset):
         self.block = block
         self.eq = eq  # without surrounding $$
         super().__init__(label, folder, obj_supplied=True)
-
-    def _repr_latex_(self) -> str:
-        return f'${self.eq}$'
 
     @property
     def tex_label(self) -> str:
@@ -182,8 +179,6 @@ class Plot(Asset):
         super().__init__(label, folder)
 
     def _ipython_display_(self):
-        # graph is already displayed through plt.show()
-        # TODO add option to display
         if callable(getattr(self.plot, '_ipython_display_', None)):
             return self.plot._ipython_display_()
 
@@ -211,7 +206,7 @@ class TexFigure(TexAsset):
     incl_args: str
 
     def __init__(self, label: str, figure: Asset, folder: Union[str, Path] = 'config.fig_path',
-                 caption: str = '', incl_args: str = r'width=.8\linewidth'):
+                 caption: str = '', incl_args: str = r'width=\linewidth'):
         self.figure = figure
         self.caption = caption
         self.incl_args = incl_args
