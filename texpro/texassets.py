@@ -71,19 +71,31 @@ class TexAsset(Asset, ABC):
     def file_name(self) -> str:
         return f'{self.label}.tex'
 
+    @property
+    def tex_output(self) -> str:
+        return self.tex
+
     def save(self) -> Asset:
-        if not self._can_save(self.tex):
+        if not self._can_save(self.tex_output):
             return
-        self.path.write_text(self.tex)
+        self.path.write_text(self.tex_output)
         return self
 
 
 class TexSnippet(TexAsset):
     tex: str
 
-    def __init__(self, label: str, tex: str = None, folder: Union[str, Path] = 'config.doc_path'):
+    def __init__(self, label: str, tex: str = None, folder: Union[str, Path] = 'config.snip_path'):
         self.tex = tex
         super().__init__(label, folder, obj_supplied=tex is not None)
+
+    @property
+    def tex_output(self) -> str:
+        if config.add_percent and \
+                (not self.tex[-1] == '%' or self.tex[-2] == r'\%'):
+            return f'{self.tex}%'
+        else:
+            return self.tex
 
     def load(self) -> Asset:
         self.tex = self.path.read_text()

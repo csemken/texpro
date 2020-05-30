@@ -49,11 +49,14 @@ class _Config:
     tab_template: str = DEFAULT_TAB_TEMPLATE
     tab_formatting: str = DEFAULT_TAB_FORMATTING
 
+    snip_path: Path = Path('.')  # absolute or relative to doc_path
+
     # behaviour
     check_paths: bool = False
     save: bool = True
     auto_save: bool = True
     auto_load: bool = True
+    add_percent: bool = True
 
     def __setattr__(self, name, value):
         if name.endswith('path') and value is not None and not isinstance(value, Path):
