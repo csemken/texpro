@@ -113,10 +113,11 @@ class TexEquation(TexAsset):
 
 
 class TexTable(TexAsset):
-    def __init__(self, label: str, df, caption: str = '',
-                 folder: Union[str, Path] = 'config.tab_path'):
+    def __init__(self, label: str, df,folder: Union[str, Path] = 'config.tab_path',
+                 caption: str = '', formatting: str = 'config.tab_formatting'):
         self.df = df
         self.caption = caption
+        self.formatting = config.get_or_return(formatting)
         super().__init__(label, folder, obj_supplied=True)
 
     def _repr_html_(self):
@@ -129,9 +130,10 @@ class TexTable(TexAsset):
     @property
     def tex(self):
         return config.tab_template.format(
-            label=self.tex_label,
+            formatting=self.formatting,
             table=self.df.to_latex(),
             caption=self.caption,
+            label=self.tex_label
         )
 
     def save(self) -> Asset:
@@ -140,16 +142,39 @@ class TexTable(TexAsset):
 
 
 class StargazerTable(TexAsset):
-    def __init__(self, label: str, stargazer, folder: Union[str, Path] = 'config.tab_path'):
+    def __init__(self, label: str, stargazer, folder: Union[str, Path] = 'config.tab_path',
+                 caption: str = '', use_template: bool = True,
+                 formatting: str = 'config.tab_formatting'):
         self.stargazer = stargazer
+        self.caption = caption
+        self.use_template = use_template
+        self.formatting = config.get_or_return(formatting)
         super().__init__(label, folder, obj_supplied=True)
 
     def _repr_html_(self):
         return self.stargazer.render_html()
 
     @property
+    def tex_label(self) -> str:
+        return config.tab_prefix + self.label
+
+    @property
     def tex(self) -> str:
-        return self.stargazer.render_latex()
+        orig_tex: str = self.stargazer.render_latex()
+        if self.use_template:
+            # remove the first three and last line from the stargazer output
+            # to get only the tabular environment
+            # MIGHT HAVE TO BECOME STARGAZER VERSION SPECIFIC
+            tabular = '\n'.join(orig_tex.split('\n')[2:-1])
+            tex = config.tab_template.format(
+                formatting=self.formatting,
+                table=tabular,
+                caption=self.caption,
+                label=self.tex_label
+            )
+        else:
+            tex = orig_tex
+        return tex
 
 
 class Image(Asset):

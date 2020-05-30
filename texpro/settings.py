@@ -16,12 +16,14 @@ DEFAULT_FIG_TEMPLATE = r'''\begin{{figure}}
 	\label{{{label}}}
 \end{{figure}}'''
 
-DEFAULT_TAB_TEMPLATE = r'''\begin{{figure}}
-	\centering
+DEFAULT_TAB_TEMPLATE = r'''\begin{{table}}
+	{formatting}
 {table}
 	\caption{{{caption}}}
 	\label{{{label}}}
-\end{{figure}}'''
+\end{{table}}'''
+
+DEFAULT_TAB_FORMATTING = '\centering'
 
 IMAGE_TYPES = []
 
@@ -45,6 +47,7 @@ class _Config:
     tab_path: Path = Path('./tab')  # absolute or relative to doc_path
     tab_prefix: str = 'tab:'
     tab_template: str = DEFAULT_TAB_TEMPLATE
+    tab_formatting: str = DEFAULT_TAB_FORMATTING
 
     # behaviour
     check_paths: bool = False

@@ -24,7 +24,7 @@ class PathTestSuite(unittest.TestCase):
         self.assertEqual(str(config.doc_path), nonsense_doc_path)
 
         # save a file -> IOError
-        self.assertRaises(IOError, TexEquation('a_b', 'test_eq').save)
+        self.assertRaises(IOError, TexEquation, 'test_eq', 'a_b')
 
         # setting nonsense absolute path
         with self.assertWarns(ResourceWarning):
@@ -60,7 +60,7 @@ class PathTestSuite(unittest.TestCase):
             config.make_folders()
 
             # save equation
-            TexEquation('a_b', 'test_eq').save()
+            TexEquation('test_eq', 'a_b').save()
 
             # test file exists
             self.assertTrue(os.path.exists(os.path.join(tmp_doc_path, 'eq', 'test_eq.tex')))
@@ -74,7 +74,7 @@ class PathTestSuite(unittest.TestCase):
             config.make_folders()
 
             # save equation
-            TexEquation('a_b', 'test_eq').save()
+            TexEquation('test_eq', 'a_b').save()
 
             # test file tree
             self.assertEqual(config.file_tree, TEST_FILE_TREE.format(dir=tmp_doc_path))

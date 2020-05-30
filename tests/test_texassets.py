@@ -20,7 +20,7 @@ class FigTestSuite(unittest.TestCase):
         # figures setup
         fig, ax = plt.subplots()
         self.plot = Plot(fig)
-        self.tex_fig = TexFigure(self.plot, 'test_fig')
+        self.tex_fig = TexFigure('test_fig', self.plot)
 
     def tearDown(self) -> None:
         self.doc_path.cleanup()
@@ -45,8 +45,17 @@ class StargazerTestSuite(unittest.TestCase):
             smf.ols('sepal_width ~ 1 + sepal_length', self.data).fit(),
             smf.ols('sepal_width ~ 0 + species + sepal_length', self.data).fit(),
         ]
-        self.stargazer = Stargazer(self.reg)
-        self.table = StargazerTable(self.stargazer)
+        self.table = StargazerTable('sepal_reg', Stargazer(self.reg))
 
     def tearDown(self) -> None:
         self.doc_path.cleanup()
+
+    def test_use_template(self):
+        stargazer_tex = self.table.stargazer.render_latex()
+
+        # use template
+        self.assertNotEqual(self.table.tex, stargazer_tex)
+
+        # do not use template
+        self.table.use_template = False
+        self.assertEqual(self.table.tex, stargazer_tex)
