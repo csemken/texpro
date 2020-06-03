@@ -1,0 +1,5 @@
+jupyter
+seaborn
+plotly
+statsmodels
+stargazer

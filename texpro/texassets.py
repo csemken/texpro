@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from textwrap import indent
 from typing import Union
-from warnings import warn
 
 from .settings import config
 
@@ -116,7 +115,11 @@ class TexEquation(TexAsset):
         return config.eq_prefix + self.label
 
     @property
-    def tex(self):
+    def tex(self) -> str:
+        return f'${self.eq}$'
+
+    @property
+    def tex_output(self) -> str:
         return config.eq_template.format(
             label=self.tex_label,
             block=self.block,
@@ -125,7 +128,7 @@ class TexEquation(TexAsset):
 
 
 class TexTable(TexAsset):
-    def __init__(self, label: str, df,folder: Union[str, Path] = 'config.tab_path',
+    def __init__(self, label: str, df, folder: Union[str, Path] = 'config.tab_path',
                  caption: str = '', formatting: str = 'config.tab_formatting'):
         self.df = df
         self.caption = caption
