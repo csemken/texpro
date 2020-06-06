@@ -1,0 +1,16 @@
+\documentclass[a4paper,twocolumn]{article}
+\usepackage{graphicx,cleveref}
+
+\begin{document}
+
+We want to know something about sepals, shown in \cref{fig:sepal_info}. Our data is shown in \cref{fig:sepal_plot}.
+\input{fig/sepal_info.tex}
+\input{fig/sepal_plot.tex}
+
+Let’s analyse it formally using the following regression:
+\input{eq/sepal_reg.tex}
+
+The results of the regression given by \cref{eq:sepal_reg} are summarised in \cref{tab:sepal_reg}.
+\input{tab/sepal_reg.tex}
+
+\end{document}

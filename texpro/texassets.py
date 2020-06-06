@@ -287,7 +287,7 @@ class TexFigure(TexAsset):
     incl_args: str
 
     def __init__(self, label: str, figure: Asset, folder: Union[str, Path] = 'config.fig_path',
-                 caption: str = '', incl_args: str = r'width=\linewidth'):
+                 caption: str = '', incl_args: str = r'width=.9\linewidth'):
         self.figure = figure
         self.caption = caption
         self.incl_args = incl_args
