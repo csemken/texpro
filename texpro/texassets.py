@@ -7,6 +7,8 @@ from pathlib import Path
 from textwrap import indent
 from typing import Union
 
+import IPython
+
 from .settings import config
 
 
@@ -192,26 +194,65 @@ class StargazerTable(TexAsset):
         return tex
 
 
-class Image(Asset):
-    file_type: str
+class Image(Asset, IPython.display.Image):
+    _ext: str = None
 
-    # TODO init that checks type
+    def __init__(self, label: str = None, folder: Union[str, Path] = 'config.img_path',
+                 extension: str = None, url: str = None, data: object = None,
+                 **kwargs):
+        """Currently supports png, jpg and gif.  There are three ways to create an Image.
 
-    # TODO file_name property
+        To load an image from a file, specify the label and extension.  For example,
+            >>> Image('test', extension='png', folder=Path('./img'))
+        will load the file img/test.png.
 
-    def _repr_mimebundle_(self, include=None, exclude=None):
-        # see https://ipython.readthedocs.io/en/stable/config/integrating.html
-        # and https://ipython.readthedocs.io/en/stable/api/generated/IPython.display.html#IPython.display.display
-        ...
+        To load an image from the web, specify the url.  The extension is automatically inferred.  For example,
+            >>> Image('test', url='http://test.org/monkey.png', folder=Path('./img'))
+        will download http://test.org/monkey.png and save it to img/test.png.
+
+        To load an image from a byte variable, use data.  The extension is automatically inferred.  For example,
+            >>> Image('test', data=img_data, folder=Path('./img'))
+        will save img_data to img/test.png.
+        """
+        # initialise label and folder
+        Asset.__init__(self, label, folder)
+
+        # initialise image
+        if extension is not None:
+            self._ext = extension
+            IPython.display.Image.__init__(self, filename=self.path, **kwargs)
+        elif url is not None:
+            # use embed=True to ensure image is downloaded
+            IPython.display.Image.__init__(self, url=url, embed=True, **kwargs)
+        elif data is not None:
+            IPython.display.Image.__init__(self, data=data, **kwargs)
+        else:
+            raise SyntaxError('No image provided. Expecting label and extension, url or data.')
+
+    @property
+    def extension(self) -> str:
+        return self._ext or self.format
+
+    @property
+    def file_name(self) -> str:
+        return f'{self.label}.{self.extension}'
+
+    def save(self) -> Asset:
+        with open(self.path, 'wb') as file:
+            file.write(self.data)
+
+    def load(self) -> Asset:
+        self.reload()
+        return self
 
 
 class Plot(Asset):
-    """Holds a plot, which must implement the `savefig()` method"""
+    """Holds a plot, which must implement the `savefig()` or `write_image()` method"""
     plot: object
     extension: str
     savefig_args: dict
 
-    def __init__(self, plot: object, label: str = None, folder: Union[str, Path] = 'config.img_path',
+    def __init__(self, plot, label: str = None, folder: Union[str, Path] = 'config.img_path',
                  extension: str = 'pdf', savefig_args: dict = {'bbox_inches': 'tight'}):
         self.plot = plot
         self.extension = extension
@@ -253,8 +294,7 @@ class TexFigure(TexAsset):
         super().__init__(label, folder, obj_supplied=True)
 
     def _ipython_display_(self):
-        # display self.figure
-        return self.figure._ipython_display_()
+        IPython.display.display(self.figure)
 
     @property
     def tex_label(self) -> str:
