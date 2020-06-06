@@ -1,0 +1,26 @@
+[build-system]
+requires = ["flit_core >=2,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.metadata]
+module = "texpro"
+author = "Christoph Semken"
+author-email = "christoph.tp@semken.info"
+home-page = "https://github.com/csemken/texpro/"
+requires=[
+    "ipython>=6.0"
+]
+requires-python=">=3.7"
+description-file="README.md"
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)"
+]
+
+[tool.flit.metadata.requires-extra]
+dev = [
+    "jupyter",
+    "seaborn",
+    "plotly",
+    "statsmodels",
+    "stargazer"
+]
