@@ -3,3 +3,11 @@
 # Example
 
 For an interactive example, see example/texpro_demo.ipynb and the example TeX file example/texpro_demo.tex.
+
+# Development
+
+TeXpro is build using [flit](https://flit.readthedocs.io/).  To build the package manually, install flit, download the source code and run the following command inside the main folder:
+```shell script
+python3 -m flit install
+```
+This will install the required dependencies and TeXpro.
