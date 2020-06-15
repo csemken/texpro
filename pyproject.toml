@@ -22,5 +22,6 @@ dev = [
     "seaborn",
     "plotly",
     "statsmodels",
-    "stargazer"
+    "stargazer",
+    "pdf2image"
 ]
