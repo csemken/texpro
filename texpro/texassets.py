@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = ['TexSnippet', 'TexEquation', 'TexTable', 'StargazerTable', 'TexFigure', 'Image', 'Plot']
 
+import io
 from abc import ABC, abstractmethod
 from pathlib import Path
 from textwrap import indent
@@ -59,7 +60,7 @@ class Asset(ABC):
         pass
 
     def load(self) -> Asset:
-        raise NotImplementedError(f'{type(self)} can currently only be saved')
+        raise NotImplementedError(f'{type(self)} can currently only be saved.')
 
 
 class TexAsset(Asset, ABC):
@@ -195,43 +196,54 @@ class StargazerTable(TexAsset):
 
 
 class Image(Asset, IPython.display.Image):
-    _ext: str = None
+    orig_format: str = None
 
     def __init__(self, label: str = None, folder: Union[str, Path] = 'config.img_path',
-                 extension: str = None, url: str = None, data: object = None,
+                 url: str = None, data: object = None, pil: object = None, format: str = 'png',
                  **kwargs):
-        """Currently supports png, jpg and gif.  There are three ways to create an Image.
+        """Currently supports png, jpg and gif.  There are four ways to create an Image.
 
-        To load an image from a file, specify the label and extension.  For example,
-            >>> Image('test', extension='png', folder=Path('./img'))
-        will load the file img/test.png.
-
-        To load an image from the web, specify the url.  The extension is automatically inferred.  For example,
+        To load an image from the web, specify the url.  The format is automatically inferred.  For example,
             >>> Image('test', url='http://test.org/monkey.png', folder=Path('./img'))
         will download http://test.org/monkey.png and save it to img/test.png.
 
-        To load an image from a byte variable, use data.  The extension is automatically inferred.  For example,
+        To load an image from a byte variable, use data.  The format is automatically inferred.  For example,
             >>> Image('test', data=img_data, folder=Path('./img'))
         will save img_data to img/test.png.
+
+        To load a pillow/PIL image, specify pil and format.  For example,
+            >>> pil_img = PIL.Image.new('RGB', (10, 10), color = 'red')
+            >>> Image('test', pil=pil_img, format='png', folder=Path('./img'))
+        will save pil_img to img/test.png.
+
+        To load an image from a file, specify the label and format.  For example,
+            >>> Image('test', format='png', folder=Path('./img'))
+        will load the file img/test.png.
         """
         # initialise label and folder
         Asset.__init__(self, label, folder)
 
         # initialise image
-        if extension is not None:
-            self._ext = extension
-            IPython.display.Image.__init__(self, filename=self.path, **kwargs)
-        elif url is not None:
+        if url:
             # use embed=True to ensure image is downloaded
             IPython.display.Image.__init__(self, url=url, embed=True, **kwargs)
-        elif data is not None:
+        elif data or pil:
+            if pil:
+                # convert PIL/pillow image into compressed image data
+                data_io = io.BytesIO()
+                pil.save(data_io, format=format)
+                data = data_io.getvalue()
             IPython.display.Image.__init__(self, data=data, **kwargs)
+        elif label and format:
+            # save format -> always used for self.file_name instead of inferred format
+            self.orig_format = format
+            IPython.display.Image.__init__(self, filename=self.path, **kwargs)
         else:
-            raise SyntaxError('No image provided. Expecting label and extension, url or data.')
+            raise SyntaxError('No image provided. Expecting url, data, pil or label and format.')
 
     @property
     def extension(self) -> str:
-        return self._ext or self.format
+        return self.orig_format or self.format
 
     @property
     def file_name(self) -> str:
@@ -249,13 +261,13 @@ class Image(Asset, IPython.display.Image):
 class Plot(Asset):
     """Holds a plot, which must implement the `savefig()` or `write_image()` method"""
     plot: object
-    extension: str
+    format: str
     savefig_args: dict
 
     def __init__(self, plot, label: str = None, folder: Union[str, Path] = 'config.img_path',
-                 extension: str = 'pdf', savefig_args: dict = {'bbox_inches': 'tight'}):
+                 format: str = 'pdf', savefig_args: dict = {'bbox_inches': 'tight'}):
         self.plot = plot
-        self.extension = extension
+        self.format = format
         self.savefig_args = savefig_args
         super().__init__(label, folder)
 
@@ -265,7 +277,7 @@ class Plot(Asset):
 
     @property
     def file_name(self) -> str:
-        return f'{self.label}.{self.extension}'
+        return f'{self.label}.{self.format}'
 
     def save(self) -> Asset:
         if callable(getattr(self.plot, 'savefig', None)):
@@ -274,11 +286,13 @@ class Plot(Asset):
         elif callable(getattr(self.plot, 'write_image', None)):
             # save plotly plots using write_image (https://plot.ly/python/static-image-export/)
             self.plot.write_image(str(self.path))
-        # TODO raise error if neither method available
+        else:
+            raise TypeError('Plot could not be saved: it has neither a savefig (matplotlib-like) '
+                            'nor a write_image (plotly-like) method.')
         return self
 
     def load(self) -> Asset:
-        raise NotImplementedError('A Plot asset cannot be loaded, only saved')
+        raise NotImplementedError('A Plot cannot be loaded, only saved')
 
 
 class TexFigure(TexAsset):
