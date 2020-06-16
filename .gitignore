@@ -3,6 +3,7 @@
 example/*
 !/example/texpro_demo.ipynb
 !/example/texpro_demo.tex
+!/example/texpro_demo.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
