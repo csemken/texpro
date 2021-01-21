@@ -296,6 +296,7 @@ class Plot(Asset):
 
 
 class TexFigure(TexAsset):
+    # TODO make sure figure is an Asset
     figure: Asset
     caption: str
     incl_args: str
@@ -319,7 +320,8 @@ class TexFigure(TexAsset):
         return config.fig_template.format(
             label=self.tex_label,
             incl_args=self.incl_args,
-            img_path=self.figure.rel_path,
+            # use relative img path, with forward slashes on windows
+            img_path=self.figure.rel_path.as_posix(),
             caption=self.caption,
         )
 

@@ -30,7 +30,7 @@ def tree(dir_path: Path, prefix: str=''):
     with each line prefixed by the same characters
     (based on https://stackoverflow.com/a/59109706)
     """
-    contents = list(dir_path.iterdir())
+    contents = sorted(dir_path.iterdir())
     # contents each get pointers that are ├── with a final └── :
     pointers = [tee] * (len(contents) - 1) + [last]
     for pointer, path in zip(pointers, contents):

@@ -5,11 +5,11 @@ import unittest
 from texpro import *
 
 TEST_FILE_TREE = '''{dir}
-├── img
-├── tab
+├── eq
+│   └── test_eq.tex
 ├── fig
-└── eq
-    └── test_eq.tex'''
+├── img
+└── tab'''
 
 
 class PathTestSuite(unittest.TestCase):
