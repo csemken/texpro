@@ -1,9 +1,9 @@
 # Custom
 .idea
-example/*
-!/example/texpro_demo.ipynb
-!/example/texpro_demo.tex
-!/example/texpro_demo.png
+docs/example/*
+!/docs/example/texpro_demo.ipynb
+!/docs/example/texpro_demo.tex
+!/docs/example/texpro_demo.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
