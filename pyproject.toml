@@ -11,6 +11,7 @@ requires=[
     "ipython>=6.0"
 ]
 requires-python=">=3.7"
+
 description-file="README.md"
 classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)"
@@ -23,5 +24,9 @@ dev = [
     "plotly",
     "statsmodels",
     "stargazer",
-    "pdf2image"
+    "pdf2image",
+]
+doc = [
+    "sphinx",
+    "myst-parser",
 ]

@@ -8,6 +8,6 @@ For an interactive example, see example/texpro_demo.ipynb and the example TeX fi
 
 TeXpro is build using [flit](https://flit.readthedocs.io/).  To build the package, (i) install flit, (ii) download the source code and (iii) run the following command inside the main folder:
 ```shell script
-python3 -m flit install
+python3 -m flit install -s
 ```
 This will install the required dependencies as well as TeXpro.
