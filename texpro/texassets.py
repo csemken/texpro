@@ -265,10 +265,12 @@ class Plot(Asset):
     savefig_args: dict
 
     def __init__(self, plot, label: str = None, folder: Union[str, Path] = 'config.img_path',
-                 format: str = 'pdf', savefig_args: dict = {'bbox_inches': 'tight'}):
+                 format: str = 'pdf', savefig_args: dict = {'bbox_inches': 'tight'},
+                 write_image_args: dict = {}):
         self.plot = plot
         self.format = format
         self.savefig_args = savefig_args
+        self.write_image_args = write_image_args
         super().__init__(label, folder)
 
     def _ipython_display_(self):
@@ -285,7 +287,7 @@ class Plot(Asset):
             self.plot.savefig(self.path, **self.savefig_args)
         elif callable(getattr(self.plot, 'write_image', None)):
             # save plotly plots using write_image (https://plot.ly/python/static-image-export/)
-            self.plot.write_image(str(self.path))
+            self.plot.write_image(str(self.path), **self.write_image_args)
         else:
             raise TypeError('Plot could not be saved: it has neither a savefig (matplotlib-like) '
                             'nor a write_image (plotly-like) method.')
