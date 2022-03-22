@@ -132,10 +132,12 @@ class TexEquation(TexAsset):
 
 class TexTable(TexAsset):
     def __init__(self, label: str, df, folder: Union[str, Path] = 'config.tab_path',
-                 caption: str = '', formatting: str = 'config.tab_formatting'):
+                 caption: str = '', formatting: str = 'config.tab_formatting',
+                 to_latex_args: dict = {}):
         self.df = df
         self.caption = caption
         self.formatting = config.get_or_return(formatting)
+        self.to_latex_args = to_latex_args
         super().__init__(label, folder, obj_supplied=True)
 
     def _repr_html_(self):
@@ -149,7 +151,7 @@ class TexTable(TexAsset):
     def tex(self):
         return config.tab_template.format(
             formatting=self.formatting,
-            table=self.df.to_latex(),
+            table=self.df.to_latex(**self.to_latex_args),
             caption=self.caption,
             label=self.tex_label
         )
