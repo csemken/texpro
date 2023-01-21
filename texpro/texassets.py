@@ -185,7 +185,8 @@ class StargazerTable(TexAsset):
             # remove the first three and last line from the stargazer output
             # to get only the tabular environment
             # MIGHT HAVE TO BECOME STARGAZER VERSION SPECIFIC
-            tabular = '\n'.join(orig_tex.split('\n')[2:-1])
+            # TODO better: remove using regex
+            tabular = '\n'.join(orig_tex.split('\n')[1:-1])
             tex = config.tab_template.format(
                 formatting=self.formatting,
                 table=tabular,

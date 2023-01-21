@@ -25,6 +25,7 @@ dev = [
     "statsmodels",
     "stargazer",
     "pdf2image",
+    "keyring",
 ]
 doc = [
     "sphinx",
